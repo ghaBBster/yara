@@ -1,11 +1,11 @@
-# Портфолио: Реверс-инжиниринг и анализ вредоносного ПО
+# Портфолио: реверс-инжиниринг и анализ вредоносного ПО
 # Рустам Тулегенов | github.com/ghaBBster
 
 ---
 
 ## YARA-правила
 
-### Правило 1: Детектирование Password Stealer (сбор учётных данных из браузеров)
+### Правило 1: детектирование Password Stealer (сбор учётных данных из браузеров)
 
 ```yara
 rule PasswordStealer_BrowserCredHarvester
@@ -47,13 +47,13 @@ rule PasswordStealer_BrowserCredHarvester
 ```
 
 **Обоснование:**
-- Комбинация путей к credential store + SQL-запросы + криптоAPI = высокая специфичность
-- Проверка MZ-заголовка и размера файла снижает false positives
-- Правило покрывает семейство стилеров, эксфильтрирующих данные через Telegram Bot API
+- Пути к credential store, SQL-запросы и крипто-API вместе дают высокую специфичность.
+- Проверка MZ-заголовка и размера файла снижает число false positives.
+- Правило покрывает семейство стилеров. Эти стилеры эксфильтрируют данные через Telegram Bot API.
 
 ---
 
-### Правило 2: Детектирование UPX-упакованных бинарников с подозрительными характеристиками
+### Правило 2: детектирование UPX-упакованных бинарников с подозрительными характеристиками
 
 ```yara
 rule Packed_UPX_Suspicious
@@ -89,13 +89,13 @@ import "pe"
 ```
 
 **Обоснование:**
-- UPX сам по себе легитимен, но комбинация с анти-дебаг техниками и минимальным импортом — red flag
-- pe.number_of_imports < 5 указывает на динамическое разрешение API (LoadLibrary + GetProcAddress)
-- Правило помогает приоритизировать образцы для ручного анализа
+- UPX сам по себе легитимен. Но вместе с анти-дебаг техниками и минимальным импортом он даёт red flag.
+- `pe.number_of_imports < 5` указывает на динамическое разрешение API (`LoadLibrary` плюс `GetProcAddress`).
+- Правило помогает приоритизировать образцы для ручного анализа.
 
 ---
 
-### Правило 3: Обфусцированный PowerShell-загрузчик
+### Правило 3: обфусцированный PowerShell-загрузчик
 
 ```yara
 rule Obfuscated_PowerShell_Loader
@@ -142,9 +142,9 @@ rule Obfuscated_PowerShell_Loader
 ```
 
 **Обоснование:**
-- Правило таргетирует типичный паттерн: закодированная команда → деобфускация через IEX → загрузка payload
-- Множественные варианты каждого паттерна покрывают разные стили обфускации
-- Ограничение размера файла отсекает легитимные PowerShell-скрипты большого объёма
+- Правило таргетирует типичный паттерн: закодированная команда, затем деобфускация через IEX, затем загрузка payload.
+- Каждый паттерн задан в нескольких вариантах. Так правило покрывает разные стили обфускации.
+- Ограничение размера файла отсекает большие легитимные PowerShell-скрипты.
 
 ---
 
@@ -197,9 +197,9 @@ import "elf"
 ```
 
 **Обоснование:**
-- ET_REL (relocatable) — признак .ko модуля ядра
-- Комбинация обращений к syscall_table + снятие write protection + механизмы скрытия
-- Два метода обхода WP: манипуляция CR0 или set_memory_rw — покрывает оба подхода
+- `ET_REL` (relocatable) — признак `.ko` модуля ядра.
+- Правило ищет обращения к `sys_call_table`, снятие write protection и механизмы скрытия вместе.
+- Обойти WP можно двумя методами: через `CR0` или через `set_memory_rw`. Правило покрывает оба.
 
 ---
 
@@ -244,9 +244,9 @@ rule Generic_CredExfil_HTTP
 ```
 
 **Обоснование:**
-- Правило ловит типичный паттерн: fingerprint жертвы → формирование payload → HTTP exfil
-- Строки $fmt* — параметры, часто используемые стилерами при отправке собранных данных
-- Более generic правило, дополняет специфичное правило 1
+- Правило ловит типичный паттерн: fingerprint жертвы, затем сборка payload, затем HTTP-эксфильтрация.
+- Строки `$fmt*` — параметры, которые стилеры часто используют при отправке собранных данных.
+- Это более generic правило. Оно дополняет специфичное правило 1.
 
 ---
 
@@ -259,9 +259,9 @@ rule Generic_CredExfil_HTTP
 **Образец:** `stealer_sample_01.exe`
 **SHA256:** `a3f2...` (хэш из лабораторной среды)
 **Инструменты:** IDA Free, x64DBG, Process Monitor, PEStudio, VirusTotal
-**Дата анализа:** Октябрь 2024
+**Дата анализа:** октябрь 2024
 
-#### Первичная разведка (Triage)
+#### Первичная разведка (triage)
 
 | Параметр | Значение |
 |----------|----------|
@@ -309,24 +309,24 @@ sub_401A20:  // ChromeCredentialHarvester
 ```
 
 **Анти-анализ проверки (функция sub_401000):**
-- `IsDebuggerPresent()` — если true, вызывает `ExitProcess(0)`
-- `GetTickCount()` до и после `Sleep(500)` — если delta < 450ms, значит Sleep был пропущен отладчиком
-- Проверка имени компьютера через `GetComputerNameA()` против списка: "SANDBOX", "VIRUS", "MALWARE", "VMWARE"
+- `IsDebuggerPresent()` — если true, образец вызывает `ExitProcess(0)`.
+- `GetTickCount()` до и после `Sleep(500)`. Если delta меньше 450 ms, значит отладчик пропустил `Sleep`.
+- Проверка имени компьютера через `GetComputerNameA()` против списка: "SANDBOX", "VIRUS", "MALWARE", "VMWARE".
 
 #### Динамический анализ (x64DBG + Process Monitor)
 
 **Обход анти-дебага:**
-1. Поставил breakpoint на `IsDebuggerPresent`, патчил возвращаемое значение EAX → 0
-2. Для GetTickCount: NOP'нул условный переход после проверки (je → nop nop)
-3. После обхода — образец начал штатное выполнение
+1. Поставил breakpoint на `IsDebuggerPresent`, пропатчил возвращаемое значение `EAX` в 0.
+2. Для `GetTickCount` занопил условный переход после проверки (`je` → `nop nop`).
+3. После обхода образец начал штатное выполнение.
 
 **Наблюдения через Process Monitor:**
-- Создание файла `%TEMP%\tmpCE42.db` (копия Login Data)
-- Чтение `%APPDATA%\Mozilla\Firefox\Profiles\*.default\logins.json`
-- DNS-запрос к `api.ipify.org` (определение внешнего IP жертвы)
-- HTTP POST к `185.xxx.xxx.xxx:80/gate.php` с собранными данными
+- Создание файла `%TEMP%\tmpCE42.db` (копия Login Data).
+- Чтение `%APPDATA%\Mozilla\Firefox\Profiles\*.default\logins.json`.
+- DNS-запрос к `api.ipify.org` (образец определяет внешний IP жертвы).
+- HTTP POST к `185.xxx.xxx.xxx:80/gate.php` с собранными данными.
 
-#### Извлечённые IOC
+#### Извлечённые IOC (Indicator of Compromise)
 
 | Тип | Значение | Контекст |
 |-----|----------|----------|
@@ -347,10 +347,10 @@ sub_401A20:  // ChromeCredentialHarvester
 | T1005 | Data from Local System | Чтение credential stores |
 
 #### Выводы и уроки
-- Первый полноценный разбор стилера от triage до IOC extraction
-- Научился обходить простые анти-дебаг проверки через патчинг в x64DBG
-- Понял механизм DPAPI для Chrome credentials
-- Опечатка "SteaerMtx" — хороший IOC: уникальный маркер для данного семейства
+- Первый полный разбор стилера: от triage до извлечения IOC.
+- Научился обходить простые анти-дебаг проверки через патчинг в x64DBG.
+- Разобрал механизм DPAPI для Chrome credentials.
+- Опечатка "SteaerMtx" — хороший IOC. Это уникальный маркер данного семейства.
 
 ---
 
@@ -358,7 +358,7 @@ sub_401A20:  // ChromeCredentialHarvester
 
 **Образец:** `packed_loader_02.exe`
 **Инструменты:** x64DBG, PEStudio, Scylla, IDA Free
-**Дата анализа:** Ноябрь 2024
+**Дата анализа:** ноябрь 2024
 
 #### Первичная разведка
 
@@ -373,7 +373,7 @@ sub_401A20:  // ChromeCredentialHarvester
 
 #### Процесс распаковки
 
-**Шаг 1: Определение OEP (Original Entry Point)**
+**Шаг 1: определение OEP (Original Entry Point)**
 ```
 Загружаю в x64DBG → EP указывает на секцию UPX1 (0x00409000)
   pushad                    ; сохранение всех регистров — классика UPX
@@ -384,38 +384,38 @@ sub_401A20:  // ChromeCredentialHarvester
   jmp OEP                   ; прыжок на оригинальный entry point
 ```
 
-**Шаг 2: Нахождение OEP**
-- Поставил hardware breakpoint на `ESP` после `pushad` (метод ESP trick)
-- При срабатывании — оказался на `popad`, далее `jmp 0x00401230`
-- 0x00401230 — OEP оригинального бинарника
+**Шаг 2: нахождение OEP**
+- Поставил hardware breakpoint на `ESP` после `pushad` (метод ESP trick).
+- При срабатывании оказался на `popad`, далее `jmp 0x00401230`.
+- `0x00401230` — это OEP оригинального бинарника.
 
-**Шаг 3: Дамп и восстановление**
-- Дамп процесса через x64DBG (Scylla plugin)
-- Import Table сломана после дампа — IAT не восстановлена автоматически
-- Scylla → IAT Autosearch → Get Imports → Fix Dump
-- Результат: рабочий распакованный PE с корректными импортами
+**Шаг 3: дамп и восстановление**
+- Снял дамп процесса через x64DBG (плагин Scylla).
+- Import Table после дампа сломана. IAT (Import Address Table) не восстановилась автоматически.
+- Scylla → IAT Autosearch → Get Imports → Fix Dump.
+- Результат: рабочий распакованный PE с корректными импортами.
 
 #### Анализ распакованного образца
 
-После распаковки — стандартный downloader:
-1. Резолвит C2-домен через `gethostbyname()`
-2. Скачивает payload: `GET /payload.bin HTTP/1.1`
-3. Записывает в `%APPDATA%\svchost.exe`
-4. Запускает через `CreateProcessA()`
-5. Прописывает персистентность: `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
+После распаковки это стандартный downloader. Он делает так:
+1. Резолвит C2-домен через `gethostbyname()`.
+2. Скачивает payload: `GET /payload.bin HTTP/1.1`.
+3. Записывает в `%APPDATA%\svchost.exe`.
+4. Запускает через `CreateProcessA()`.
+5. Прописывает персистентность: `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
 
 #### Выводы
-- Освоил метод ESP trick для поиска OEP
-- Научился работать со Scylla для восстановления IAT
-- UPX — учебный пакер, но навык ручной распаковки переносится на более сложные пакеры
+- Освоил метод ESP trick для поиска OEP.
+- Научился работать со Scylla для восстановления IAT.
+- UPX — учебный пакер. Но навык ручной распаковки переносится на более сложные пакеры.
 
 ---
 
-### Кейс 3: Обфусцированный PowerShell-загрузчик
+### Кейс 3: обфусцированный PowerShell-загрузчик
 
 **Образец:** `invoice_update.ps1`
 **Инструменты:** PowerShell ISE, CyberChef, текстовый редактор
-**Дата анализа:** Декабрь 2024
+**Дата анализа:** декабрь 2024
 
 #### Структура обфускации (3 уровня)
 
@@ -448,9 +448,9 @@ Start-Process "$env:TEMP\update.exe"
 
 #### Процесс деобфускации
 
-1. **Уровень 1:** Заменил `Invoke-Expression` на `Write-Output` → получил decoded строку
-2. **Уровень 2:** Выполнил конкатенацию вручную, восстановил URL и метод загрузки
-3. **Уровень 3:** Конвертировал char-коды через CyberChef → получил финальный payload
+1. **Уровень 1:** заменил `Invoke-Expression` на `Write-Output`, получил decoded строку.
+2. **Уровень 2:** выполнил конкатенацию вручную, восстановил URL и метод загрузки.
+3. **Уровень 3:** конвертировал char-коды через CyberChef, получил финальный payload.
 
 #### Извлечённые IOC
 
@@ -476,7 +476,7 @@ Start-Process "$env:TEMP\update.exe"
 
 **Образец:** `rootkit.ko` (loadable kernel module)
 **Инструменты:** IDA Pro, GDB (kernel debug), readelf, objdump, Volatility, ftrace
-**Дата анализа:** Январь 2025
+**Дата анализа:** январь 2025
 
 #### Первичная разведка
 
@@ -556,7 +556,7 @@ asmlinkage int hooked_kill(pid_t pid, int sig) {
 
 #### Динамический анализ
 
-**Среда:** Изолированная VM с Linux 5.4, загрузка модуля через `insmod`
+**Среда:** изолированная VM с Linux 5.4. Модуль загружается через `insmod`.
 
 **ftrace наблюдения:**
 ```bash
@@ -591,10 +591,10 @@ EXPECTED=$(grep "sys_getdents64" /proc/kallsyms | awk '{print $1}')
 | T1082 | System Information Discovery |
 
 #### Выводы
-- Первый kernel-level анализ — значительно сложнее user-mode малвари
-- Понял механизм CR0 WP bit manipulation для записи в read-only memory
-- Backdoor через kill signal — элегантный и трудно обнаруживаемый
-- Опыт с xv6 kernel напрямую помог: я уже понимал syscall flow и таблицы страниц
+- Первый анализ на уровне ядра. Он заметно сложнее, чем разбор user-mode малвари.
+- Разобрал механизм CR0 WP bit manipulation для записи в read-only память.
+- Backdoor через kill signal скрыт хорошо, обнаружить его трудно.
+- Опыт с ядром xv6 помог напрямую: я уже понимал syscall flow и таблицы страниц.
 
 ---
 
@@ -629,11 +629,11 @@ def compute_hashes(filepath):
 
 ### Strings Analyzer (Python, 120 строк)
 
-Фильтрация строк из бинарника с выделением подозрительных паттернов:
-- URL/IP regex matching
-- Registry key detection
-- Подозрительные WinAPI (VirtualAlloc, WriteProcessMemory, CreateRemoteThread)
-- Экспорт в CSV с категоризацией
+Скрипт фильтрует строки из бинарника и выделяет подозрительные паттерны:
+- URL/IP regex matching.
+- Registry key detection.
+- Подозрительные WinAPI (`VirtualAlloc`, `WriteProcessMemory`, `CreateRemoteThread`).
+- Экспорт в CSV с категоризацией.
 
 ---
 
